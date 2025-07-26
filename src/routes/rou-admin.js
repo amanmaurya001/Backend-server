@@ -1,0 +1,11 @@
+import express from "express";
+import { adminProduts ,createProductByAdmin,deleteProduct,adminSingleProduct,UpdateProductByAdmin,dashboardIsAvailable} from "../controler/con-admin.js";
+import { areYouAdmin } from "../middleware/mid-areyouadmin.js";
+const router = express.Router();
+router.get("/admin/products",areYouAdmin, adminProduts);
+router.get("/admin/dashboard",dashboardIsAvailable );
+router.get("/admin/singleproducts/:SingleProductId",areYouAdmin,adminSingleProduct);
+router.put("/admin/updateproducts/:SingleProductId",areYouAdmin,UpdateProductByAdmin);
+router.post("/admin/createproducts", createProductByAdmin);
+router.delete("/admin/deleteproducts/:deleteId",areYouAdmin,deleteProduct);
+export default router;
