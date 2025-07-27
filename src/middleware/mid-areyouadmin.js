@@ -20,6 +20,6 @@ export const areYouAdmin = async (req, res, next) => {
       return res.status(403).json({ message: "Access denied. Admins only." });
     }
   } catch (err) {
-    throw new Error("mere ko chytiya samjhta h kya bc");
+    throw new Error("server error");
   }
 };

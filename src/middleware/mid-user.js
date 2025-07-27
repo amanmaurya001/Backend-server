@@ -17,6 +17,6 @@ export const isLoggedIn = (req, res, next) => {
     req.user = decodedUserId.userId;
     next();
   } catch (err) {
-    throw new Error("chal be nikal");
+    throw new Error("server error");
   }
 };
