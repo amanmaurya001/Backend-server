@@ -22,8 +22,26 @@ export const getProductsByGender = async (req, res) => {
   }
 };
 
+export const getRandomProductsByGender = async (req, res) => {
+  try {
+    const { Gender } = req.params;
 
+    const randomProducts = await Product.aggregate([
+      {
+        $match: {
+          gender: { $regex: `^${Gender}$`, $options: "i" },
+        },
+      },
+      {
+        $sample: { size: 8 },
+      },
+    ]);
 
+    res.status(200).json(randomProducts);
+  } catch (error) {
+    res.status(500).json({ message: "Kuch galat ho gaya", error });
+  }
+};
 
 
 export const getProductsByGenderCategory = async (req, res) => {

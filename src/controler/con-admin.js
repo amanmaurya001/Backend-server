@@ -184,6 +184,10 @@ export const adminProduts = async (req, res) => {
     res.status(401).json({ message: "failed", err });
   }
 };
+
+
+
+
 export const adminSingleProduct = async (req, res) => {
   try {
     const { SingleProductId } = req.params;
@@ -193,9 +197,11 @@ export const adminSingleProduct = async (req, res) => {
     }
     res.status(200).json(productData);
   } catch (err) {
-    res.status(500).json({ message: "Failed to filter products", error });
+    res.status(500).json({ message: "Failed to find the product", err });
   }
 };
+
+
 export const deleteProduct = async (req, res) => {
   try {
     const { deleteId } = req.params;
