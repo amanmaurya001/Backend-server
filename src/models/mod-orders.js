@@ -1,10 +1,13 @@
 import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
+  cartId: {
+    type: String,
     required: true,
-    ref: "User", // Optional, if user model exists
+  },
+  email: {
+    type: String,
+    required: true,
   },
   items: [
     {
@@ -16,7 +19,7 @@ const orderSchema = new mongoose.Schema({
       name: String,
       size: String,
       quantity: Number,
-      price: Number, // ₹ in rupees (not cents)
+      price: Number, // ₹ in rupees
     },
   ],
   subtotal: {
@@ -39,10 +42,11 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: "paid",
   },
+  stripeSessionId: String,
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
 
-export default mongoose.model("Order", orderSchema,"orders");
+export default mongoose.model("Order", orderSchema, "orders");

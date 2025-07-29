@@ -8,6 +8,7 @@ import searchRoutes from "./routes/rou-search.js";
 import adminRoutes from "./routes/rou-admin.js";
 import profileRoutes from "./routes/rou-profile.js"
 import adressRoutes from "./routes/rou-adress.js"
+import webhookRoutes from "./routes/rou-webhook.js"
 
 import cors from "cors";
 const app = express();
@@ -18,7 +19,7 @@ app.use(
     origin: ["http://localhost:5173","https://vite-frontend-ten.vercel.app"],
   })
 );
-
+app.use("/webhook", webhookRoutes);
 app.use(express.json());
 
 app.use(productRoutes);
