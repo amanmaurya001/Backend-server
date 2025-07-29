@@ -19,7 +19,7 @@ app.use(
     origin: ["http://localhost:5173","https://vite-frontend-ten.vercel.app"],
   })
 );
-app.use("/webhook", webhookRoutes);
+app.use( webhookRoutes);
 app.use(express.json());
 
 app.use(productRoutes);
