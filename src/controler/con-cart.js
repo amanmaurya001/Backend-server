@@ -208,7 +208,7 @@ console.log(cartId);
       },
       quantity: 1,
     });
-
+    console.log("✅ Selected Address being sent to Stripe metadata:", selectedAddress);
     // 💳 6. Create Stripe Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -216,7 +216,7 @@ console.log(cartId);
       line_items,
       client_reference_id: cartId,
       metadata: {
-        addressId: selectedAddress._id.toString(),
+      
         fullName: selectedAddress.fullName,
         mobile: selectedAddress.mobile,
         pincode: selectedAddress.pincode,

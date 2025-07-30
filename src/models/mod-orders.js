@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-
 const orderSchema = new mongoose.Schema({
   cartId: {
     type: String,
@@ -19,9 +17,23 @@ const orderSchema = new mongoose.Schema({
       name: String,
       size: String,
       quantity: Number,
-      price: Number, // ₹ in rupees
+      price: Number,
     },
   ],
+
+  // ✅ ADD THIS
+  address: {
+ 
+    fullName: String,
+    mobile: String,
+    pincode: String,
+    city: String,
+    state: String,
+    block: String,
+    locality: String,
+    landmark: String,
+  },
+
   subtotal: {
     type: Number,
     required: true,
@@ -48,5 +60,3 @@ const orderSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-
-export default mongoose.model("Order", orderSchema, "orders");

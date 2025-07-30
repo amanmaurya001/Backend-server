@@ -65,7 +65,7 @@ export const handleStripeWebhook = async (req, res) => {
 
       // ✅ Extract full address from session metadata
       const address = {
-        _id: session.metadata.addressId,
+    
         fullName: session.metadata.fullName,
         mobile: session.metadata.mobile,
         pincode: session.metadata.pincode,
