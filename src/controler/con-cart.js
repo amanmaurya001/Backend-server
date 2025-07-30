@@ -1,6 +1,7 @@
 import Cart from "../models/mod-cart.js";
 import Product from "../models/product.js";
 import Order from "../models/mod-orders.js";
+import User from "../models/user.js"
 import jwt from "jsonwebtoken";
 import Stripe from "stripe";
 import dotenv from "dotenv";
@@ -124,15 +125,37 @@ export const deleteCartItem = async (req, res) => {
 
 
 
+
+
+
 export const createCheckoutSession = async (req, res) => {
   try {
-    const cartId = req.user;
+    const { addressId } = req.body;
+    const cartId = req.user; // from auth middleware (user._id)
+console.log(cartId);
+    // 🟢 1. Find full user
+    const user = await User.findById(cartId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 🟢 2. Find selected address from user.addresses
+    const selectedAddress = user.addresses.find(
+      (addr) => addr._id.toString() === addressId
+    );
+
+    if (!selectedAddress) {
+      return res.status(400).json({ message: "Address not found in user" });
+    }
+
+    // 🛒 3. Get cart
     const cartUserObj = await Cart.findOne({ cartId });
 
     if (!cartUserObj || cartUserObj.items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
+    // 🛍️ 4. Get products & prepare line items
     const productIds = cartUserObj.items.map((item) => item.productId);
     const products = await Product.find({ _id: { $in: productIds } });
 
@@ -146,7 +169,7 @@ export const createCheckoutSession = async (req, res) => {
       if (!product) continue;
 
       const basePrice = product.price?.original || 0;
-      const safeUnitPrice = Math.round(basePrice); // ✅ ₹ rounded
+      const safeUnitPrice = Math.round(basePrice);
       const itemTotal = safeUnitPrice * cartItem.quantity;
       subtotal += itemTotal;
 
@@ -156,16 +179,16 @@ export const createCheckoutSession = async (req, res) => {
           product_data: {
             name: `${product.name} (Size: ${cartItem.size})`,
           },
-          unit_amount: safeUnitPrice * 100, // ✅ cents
+          unit_amount: safeUnitPrice * 100,
         },
-        quantity: cartItem.quantity, // ✅ Stripe will show this
+        quantity: cartItem.quantity,
       });
     }
 
+    // 🚚 5. Delivery & Discount
     const discount = subtotal * 0.1;
     const deliveryCharge = subtotal >= 2500 ? 0 : 100;
 
-    // ✅ Add delivery line if needed
     if (deliveryCharge > 0) {
       line_items.push({
         price_data: {
@@ -177,7 +200,6 @@ export const createCheckoutSession = async (req, res) => {
       });
     }
 
-    // ✅ Visual discount line (Stripe doesn’t allow negative)
     line_items.push({
       price_data: {
         currency: "usd",
@@ -187,11 +209,23 @@ export const createCheckoutSession = async (req, res) => {
       quantity: 1,
     });
 
+    // 💳 6. Create Stripe Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       line_items,
-        client_reference_id: cartId,
+      client_reference_id: cartId,
+      metadata: {
+        addressId: selectedAddress._id.toString(),
+        fullName: selectedAddress.fullName,
+        mobile: selectedAddress.mobile,
+        pincode: selectedAddress.pincode,
+        city: selectedAddress.city,
+        state: selectedAddress.state,
+        block: selectedAddress.block,
+        locality: selectedAddress.locality,
+        landmark: selectedAddress.landmark || "", // safe for undefined
+      },
       success_url: "http://localhost:5173/",
       cancel_url: "http://localhost:5173/cancel",
     });
