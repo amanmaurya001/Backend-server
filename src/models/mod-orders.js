@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const orderSchema = new mongoose.Schema({
   cartId: {
     type: String,
@@ -23,7 +25,7 @@ const orderSchema = new mongoose.Schema({
 
   // ✅ ADD THIS
   address: {
- 
+
     fullName: String,
     mobile: String,
     pincode: String,
@@ -60,3 +62,6 @@ const orderSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+
+export default mongoose.model("Order", orderSchema, "orders");
