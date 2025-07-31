@@ -9,6 +9,7 @@ import adminRoutes from "./routes/rou-admin.js";
 import profileRoutes from "./routes/rou-profile.js"
 import adressRoutes from "./routes/rou-adress.js"
 import webhookRoutes from "./routes/rou-webhook.js"
+import orderRoutes from "./routes/rou-order.js"
 
 import cors from "cors";
 const app = express();
@@ -31,5 +32,6 @@ app.use(searchRoutes);
 app.use(adminRoutes);
 app.use(profileRoutes);
 app.use(adressRoutes);
+app.use(orderRoutes);
 
 export default app;

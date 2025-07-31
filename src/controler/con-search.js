@@ -1,14 +1,6 @@
 import Product from "../models/product.js";
 
-// export const search = async (req, res) => {
-//   try {
-//     const searchText = req.body.search;
-//     const searchArray = searchText.trim().split(" ");
-//     res.json({ searchArray });
-//   } catch (err) {
-//     res.json({ error: "no such product " });
-//   }
-// };
+
 
 
 

@@ -132,7 +132,7 @@ export const createCheckoutSession = async (req, res) => {
   try {
     const { addressId } = req.body;
     const cartId = req.user; // from auth middleware (user._id)
-console.log(cartId);
+     console.log(cartId);
     // 🟢 1. Find full user
     const user = await User.findById(cartId);
     if (!user) {
