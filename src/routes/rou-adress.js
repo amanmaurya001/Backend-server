@@ -1,9 +1,10 @@
 import express from "express";
 import { createAddress,showAddress ,editAddressDataShow,updateAddress} from "../controler/con-adress.js";
 import { isLoggedIn } from "../middleware/mid-user.js";
+import { addressValidator } from "../validator/val-address.js";
 const router = express.Router();
-router.post("/createAdress",isLoggedIn,createAddress );
+router.post("/createAdress",isLoggedIn,addressValidator,createAddress );
 router.get("/showAdress",isLoggedIn,showAddress );
 router.get("/editShowAdress/:addressId",isLoggedIn,editAddressDataShow );
-router.post("/updateAddress/:addressId",isLoggedIn,updateAddress );
+router.post("/updateAddress/:addressId",isLoggedIn,addressValidator,updateAddress );
 export default router;
