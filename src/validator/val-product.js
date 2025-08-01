@@ -51,17 +51,28 @@ export const genderCategoryValidator = (req, res, next) => {
 
 
 
-
 export const singleProductValidator = (req, res, next) => {
-  let { id } = req.params;
+  try {
+    let { id } = req.params;
 
-  id = id?.toString().trim().replace(/<[^>]*>?/gm, "");
-  const isValidMongoId = /^[a-f\d]{24}$/i.test(id);
+    if (!id) {
+      return res.status(400).json({ message: "Product ID is required" });
+    }
 
-  if (!isValidMongoId) {
-    return res.status(400).json({ message: "Invalid product ID format" });
+    // Sanitize input
+    id = id.toString().trim().replace(/<[^>]*>?/gm, "");
+
+    // Validate against custom pattern: alphanumerics with hyphen/underscore
+    const isValidCustomId = /^[a-zA-Z0-9_-]+$/.test(id);
+
+    if (!isValidCustomId) {
+      return res.status(400).json({ message: "Invalid product ID format" });
+    }
+
+    req.params.id = id;
+    next();
+  } catch (err) {
+    console.error("Validator Error:", err);
+    return res.status(500).json({ message: "Something went wrong in validator" });
   }
-
-  req.params.id = id;
-  next();
 };

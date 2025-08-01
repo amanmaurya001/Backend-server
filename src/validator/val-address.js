@@ -17,6 +17,10 @@ export const addressValidator = (req, res, next) => {
   // --- Text field sanitization helper ---
   const sanitize = (val) => val.toString().trim().replace(/<[^>]*>?/gm, "");
 
+  // --- Capitalize helper ---
+  const capitalize = (str) =>
+    str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
   // --- Full Name ---
   if (!fullName) {
     errors.push("fullName is required");
@@ -86,24 +90,27 @@ export const addressValidator = (req, res, next) => {
     req.body.landmark = landmark;
   }
 
-  // --- addressType (optional) ---
-  const allowedTypes = ["home", "work", "other"];
+  // --- addressType (optional, capitalize to match schema) ---
+  const allowedTypes = ["Home", "Work", "Other"];
   if (addressType) {
-    addressType = addressType.toString().trim().toLowerCase();
+    addressType = capitalize(addressType);
     if (!allowedTypes.includes(addressType)) {
-      errors.push("addressType must be home, work, or other");
+      errors.push("addressType must be Home, Work, or Other");
     } else {
       req.body.addressType = addressType;
     }
   } else {
-    req.body.addressType = "home"; // default
+    req.body.addressType = "Home"; // default
   }
 
   // --- isDefault (optional) ---
   if (typeof isDefault !== "undefined") {
-    if (typeof isDefault !== "boolean") {
+    if (typeof isDefault === "string") {
+      isDefault = isDefault.toLowerCase() === "true";
+    } else if (typeof isDefault !== "boolean") {
       errors.push("isDefault must be true or false");
     }
+    req.body.isDefault = isDefault;
   } else {
     req.body.isDefault = false;
   }

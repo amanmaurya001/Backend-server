@@ -38,19 +38,23 @@ export const registerValidator = (req, res, next) => {
     }
   }
 
-  // --- Gender ---
-  const allowedGenders = ["male", "female", "other"];
-  if (gender) {
+  // --- Gender (required, must match schema enum) ---
+  const allowedGenders = ["male", "female", "others"];
+  if (!gender) {
+    errors.push("gender is required");
+  } else {
     gender = gender.toString().trim().toLowerCase();
     if (!allowedGenders.includes(gender)) {
-      errors.push("gender must be male, female, or other");
+      errors.push("gender must be male, female, or others");
     } else {
       req.body.gender = gender;
     }
   }
 
-  // --- DOB (must be at least 14 years old) ---
-  if (dob) {
+  // --- DOB (required, must be at least 14 years old) ---
+  if (!dob) {
+    errors.push("dob is required");
+  } else {
     const dobDate = new Date(dob);
     const today = new Date();
 
@@ -68,13 +72,15 @@ export const registerValidator = (req, res, next) => {
       if (!is14Plus) {
         errors.push("You must be at least 14 years old to register");
       } else {
-        req.body.dob = dobDate.toISOString(); // clean ISO date
+        req.body.dob = dobDate.toISOString(); // clean ISO
       }
     }
   }
 
-  // --- Phone (optional, but must be 10-digit Indian number starting with 6-9) ---
-  if (phone) {
+  // --- Phone (required) ---
+  if (!phone) {
+    errors.push("phone is required");
+  } else {
     phone = phone.toString().trim();
     if (!/^[6-9]\d{9}$/.test(phone)) {
       errors.push("phone must be a valid 10-digit Indian number starting with 6-9");
@@ -83,9 +89,13 @@ export const registerValidator = (req, res, next) => {
     }
   }
 
-  // --- Final error check ---
+  // --- Final error return ---
   if (errors.length > 0) {
-    return res.status(400).json({ message: errors.join(", ") });
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors: errors, // send array of errors
+    });
   }
 
   next();
