@@ -122,3 +122,30 @@ export const addressValidator = (req, res, next) => {
 
   next();
 };
+export const editAddressValidator = (req, res, next) => {
+  let { addressId } = req.params;
+  const errors = [];
+
+  // Step 1: Required check
+  if (!addressId) {
+    errors.push("addressId is required in URL");
+  } else {
+    // Step 2: Sanitize input
+    addressId = addressId.toString().trim().replace(/<[^>]*>?/gm, "");
+
+    // Step 3: Validate ObjectId format
+    const isValidMongoId = /^[a-f\d]{24}$/i.test(addressId);
+    if (!isValidMongoId) {
+      errors.push("Invalid addressId format");
+    } else {
+      req.params.addressId = addressId; // update cleaned id
+    }
+  }
+
+  // Step 4: If error, respond
+  if (errors.length > 0) {
+    return res.status(400).json({ success: false, message: errors.join(", ") });
+  }
+
+  next();
+};
