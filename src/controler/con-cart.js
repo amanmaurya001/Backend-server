@@ -127,40 +127,34 @@ export const deleteCartItem = async (req, res) => {
 
 
 
-
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { addressId } = req.body;
-    const cartId = req.user; // from auth middleware (user._id)
-     console.log(cartId);
-    // 🟢 1. Find full user
-    const user = await User.findById(cartId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const { addressId, paymentMethod } = req.body;
+    const cartId = req.user;
 
-    // 🟢 2. Find selected address from user.addresses
+    console.log("📥 Payment Method Received:", paymentMethod);
+
+    // 1️⃣ Get User & Address
+    const user = await User.findById(cartId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
     const selectedAddress = user.addresses.find(
       (addr) => addr._id.toString() === addressId
     );
+    if (!selectedAddress) return res.status(400).json({ message: "Address not found" });
 
-    if (!selectedAddress) {
-      return res.status(400).json({ message: "Address not found in user" });
-    }
-
-    // 🛒 3. Get cart
+    // 2️⃣ Get Cart
     const cartUserObj = await Cart.findOne({ cartId });
-
     if (!cartUserObj || cartUserObj.items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // 🛍️ 4. Get products & prepare line items
+    // 3️⃣ Fetch Products & Calculate Order Details (subtotal, etc.)
     const productIds = cartUserObj.items.map((item) => item.productId);
     const products = await Product.find({ _id: { $in: productIds } });
 
     let subtotal = 0;
-    const line_items = [];
+    const orderItems = [];
 
     for (const cartItem of cartUserObj.items) {
       const product = products.find(
@@ -169,25 +163,65 @@ export const createCheckoutSession = async (req, res) => {
       if (!product) continue;
 
       const basePrice = product.price?.original || 0;
-      const safeUnitPrice = Math.round(basePrice);
-      const itemTotal = safeUnitPrice * cartItem.quantity;
+      const unitPrice = Math.round(basePrice);
+      const itemTotal = unitPrice * cartItem.quantity;
       subtotal += itemTotal;
 
+      orderItems.push({
+        productId: product._id,
+        name: product.name,
+        size: cartItem.size,
+        quantity: cartItem.quantity,
+        price: unitPrice,
+      });
+    }
+
+    const discount = Math.round(subtotal * 0.1);
+    const deliveryCharge = subtotal >= 2500 ? 0 : 100;
+    const total = subtotal - discount + deliveryCharge;
+
+    // 4️⃣ COD Flow: Save to DB, skip Stripe
+    if (paymentMethod?.toLowerCase() === "cod") {
+      console.log("💰 COD selected, skipping Stripe.");
+
+      const newOrder = new Order({
+        cartId,
+        email: user.email,
+        paymentMethod: "cod",
+        paymentStatus: "pending",
+        items: orderItems,
+        address: selectedAddress,
+        subtotal,
+        discount,
+        delivery: deliveryCharge,
+        total,
+        createdAt: new Date(),
+      });
+
+      await newOrder.save();
+      await Cart.deleteOne({ cartId });
+
+      return res.status(200).json({
+        message: "Order placed with Cash on Delivery",
+        cod: true,
+      });
+    }
+
+    // 5️⃣ Stripe Flow: Prepare line_items & create session
+    const line_items = [];
+
+    for (const item of orderItems) {
       line_items.push({
         price_data: {
           currency: "usd",
           product_data: {
-            name: `${product.name} (Size: ${cartItem.size})`,
+            name: `${item.name} (Size: ${item.size})`,
           },
-          unit_amount: safeUnitPrice * 100,
+          unit_amount: item.price * 100,
         },
-        quantity: cartItem.quantity,
+        quantity: item.quantity,
       });
     }
-
-    // 🚚 5. Delivery & Discount
-    const discount = subtotal * 0.1;
-    const deliveryCharge = subtotal >= 2500 ? 0 : 100;
 
     if (deliveryCharge > 0) {
       line_items.push({
@@ -208,15 +242,13 @@ export const createCheckoutSession = async (req, res) => {
       },
       quantity: 1,
     });
-    console.log("✅ Selected Address being sent to Stripe metadata:", selectedAddress);
-    // 💳 6. Create Stripe Session
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       line_items,
       client_reference_id: cartId,
       metadata: {
-      
         fullName: selectedAddress.fullName,
         mobile: selectedAddress.mobile,
         pincode: selectedAddress.pincode,
@@ -224,7 +256,8 @@ export const createCheckoutSession = async (req, res) => {
         state: selectedAddress.state,
         block: selectedAddress.block,
         locality: selectedAddress.locality,
-        landmark: selectedAddress.landmark || "", // safe for undefined
+        landmark: selectedAddress.landmark || "",
+        paymentMethod: paymentMethod || "card",
       },
       success_url: "http://localhost:5173/",
       cancel_url: "http://localhost:5173/cancel",
@@ -232,11 +265,10 @@ export const createCheckoutSession = async (req, res) => {
 
     res.json({ url: session.url });
   } catch (err) {
-    console.error("Stripe error:", err.message);
+    console.error("❌ Error in Checkout:", err.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 
 
