@@ -3,9 +3,7 @@ import Cart from "../models/mod-cart.js";
 import Product from "../models/product.js";
 import Order from "../models/mod-orders.js";
 
-// Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
 
 export const handleStripeWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -63,9 +61,7 @@ export const handleStripeWebhook = async (req, res) => {
       const delivery = subtotal >= 2500 ? 0 : 100;
       const total = subtotal - discount + delivery;
 
-      // ✅ Extract full address from session metadata
       const address = {
-    
         fullName: session.metadata.fullName,
         mobile: session.metadata.mobile,
         pincode: session.metadata.pincode,
@@ -76,20 +72,20 @@ export const handleStripeWebhook = async (req, res) => {
         landmark: session.metadata.landmark || "",
       };
 
-      // ✅ Save everything to Order
       await Order.create({
         cartId,
         email,
+        paymentMethod: session.metadata.paymentMethod || "card", // ✅ NEW
+        paymentStatus: "paid", // ✅ NEW
         items: orderItems,
+        address,
         subtotal,
         discount,
         delivery,
         total,
-        address, // ✅ Full address saved here
         stripeSessionId: session.id,
       });
 
-      // ✅ Clean up cart
       await Cart.deleteOne({ cartId });
 
       console.log("✅ Order successfully created for:", email);
@@ -102,6 +98,7 @@ export const handleStripeWebhook = async (req, res) => {
 
   return res.status(200).send("Event received");
 };
+
 
 
 

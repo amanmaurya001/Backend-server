@@ -9,6 +9,11 @@ const orderSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  paymentMethod: {
+    type: String,
+    enum: ["card", "upi", "cod"],
+    required: true,
+  },
   items: [
     {
       productId: {
@@ -22,10 +27,7 @@ const orderSchema = new mongoose.Schema({
       price: Number,
     },
   ],
-
-  // ✅ ADD THIS
   address: {
-
     fullName: String,
     mobile: String,
     pincode: String,
@@ -35,7 +37,6 @@ const orderSchema = new mongoose.Schema({
     locality: String,
     landmark: String,
   },
-
   subtotal: {
     type: Number,
     required: true,
@@ -54,14 +55,14 @@ const orderSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    default: "paid",
+    enum: ["paid", "pending", "failed"],
+    default: "pending", // for COD
   },
-  stripeSessionId: String,
+  stripeSessionId: String, // only for Stripe orders
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
-
 
 export default mongoose.model("Order", orderSchema, "orders");

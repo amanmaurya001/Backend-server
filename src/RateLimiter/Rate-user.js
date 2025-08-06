@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 
 // Register Rate Limiter - Very Strict
 export const registerRateLimit = rateLimit({
@@ -12,15 +12,20 @@ export const registerRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
+
+  // ✅ FIXED HERE
   keyGenerator: (req) => {
-    return `register-${req.ip}`;
+    const ip = ipKeyGenerator(req); // ✅ Correctly handles IPv4 and IPv6
+    return `register-${ip}`;
   },
+
   handler: (req, res) => {
-    const remainingTime = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000 / 60);
+    const resetTime = req.rateLimit.resetTime || new Date(Date.now() + 15 * 60 * 1000);
+    const remainingTime = Math.ceil((resetTime - Date.now()) / 1000 / 60);
     res.status(429).json({
       success: false,
       message: `Too many registration attempts. Please try again after ${remainingTime} minutes.`,
-      retryAfter: remainingTime + " minutes"
+      retryAfter: `${remainingTime} minutes`
     });
   }
 });
@@ -28,24 +33,29 @@ export const registerRateLimit = rateLimit({
 // Login Rate Limiter - Strict
 export const loginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Maximum 5 login attempts per 15 minutes
+  max: 5,
   message: {
     success: false,
     message: "Too many login attempts. Please try again after 15 minutes.",
-    retryAfter: "15 minutes"
+    retryAfter: "15 minutes",
   },
   standardHeaders: true,
   legacyHeaders: false,
+
+
   keyGenerator: (req) => {
-    const username = req.body?.username || 'unknown';
-    return `login-${req.ip}-${username}`;
+    const username = req.body?.username || "unknown";
+    const ip = ipKeyGenerator(req); // ✅ Safe for IPv6
+    return `login-${ip}-${username}`;
   },
+
+  // Optional: Better error message
   handler: (req, res) => {
-    const remainingTime = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000 / 60);
-    res.status(429).json({
+    const resetTime = req.rateLimit.resetTime || new Date(Date.now() + 15 * 60 * 1000);
+    const remainingTime = Math.ceil((resetTime - Date.now()) / 1000 / 60);
+    return res.status(429).json({
       success: false,
-      message: `Too many login attempts. Please try again after ${remainingTime} minutes.`,
-      retryAfter: remainingTime + " minutes"
+      message: `Too many login attempts. Try again after ${remainingTime} minutes.`,
     });
   }
 });
