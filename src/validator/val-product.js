@@ -30,7 +30,7 @@ export const randomGenderValidator = (req, res, next) => {
 export const genderCategoryValidator = (req, res, next) => {
   const { navGender, navCategory } = req.params;
   const allowedGenders = ["men", "women"];
-  const allowedCategories = ["Shirt","T-Shirt","Kurti","Crop","Corset","pants","denim-jeans","trousers","mini","midi","maxi","floral","Cottage","polo","formal-pants"];
+  const allowedCategories = ["shirt","t-shirt","kurti","crop","corset","pants","denim-jeans","trousers","mini","midi","maxi","floral","cottage","polo","formal-pants"];
 
   const gender = navGender?.toString().trim().toLowerCase().replace(/<[^>]*>?/gm, "");
   const category = navCategory?.toString().trim().toLowerCase().replace(/<[^>]*>?/gm, "");

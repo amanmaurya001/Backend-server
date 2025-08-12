@@ -1,27 +1,24 @@
 import Product from "../models/product.js";
 
-
-
-
-
-
-
+// ✅ Get products by gender
 export const getProductsByGender = async (req, res) => {
   try {
     const { navGender } = req.params;
-    const query1 = {};
+    const query = {};
 
     if (navGender) {
-      query1.gender = new RegExp(`^${navGender}$`, "i");
+      query.gender = new RegExp(`^${navGender}$`, "i"); // Case-insensitive match
     }
 
-    const allproducts = await Product.find(query1);
-    res.status(200).json(allproducts);
+    const allProducts = await Product.find(query);
+    res.status(200).json(allProducts);
   } catch (error) {
-    res.status(500).json({ message: "Failed to filter products", error });
+    console.error("Error in getProductsByGender:", error);
+    res.status(500).json({ message: "Failed to filter products" });
   }
 };
 
+// ✅ Get random products by gender
 export const getRandomProductsByGender = async (req, res) => {
   try {
     const { Gender } = req.params;
@@ -39,11 +36,12 @@ export const getRandomProductsByGender = async (req, res) => {
 
     res.status(200).json(randomProducts);
   } catch (error) {
-    res.status(500).json({ message: "Kuch galat ho gaya", error });
+    console.error("Error in getRandomProductsByGender:", error);
+    res.status(500).json({ message: "Something went wrong while fetching products" });
   }
 };
 
-
+// ✅ Get products by gender & category
 export const getProductsByGenderCategory = async (req, res) => {
   try {
     const { navGender, navCategory } = req.params;
@@ -59,22 +57,24 @@ export const getProductsByGenderCategory = async (req, res) => {
     const filteredProducts = await Product.find(query);
     res.status(200).json(filteredProducts);
   } catch (error) {
-    res.status(500).json({ message: "Failed to filter products", error });
+    console.error("Error in getProductsByGenderCategory:", error);
+    res.status(500).json({ message: "Failed to filter products" });
   }
 };
 
-
-
-
-
-
+// ✅ Get single product by ID
 export const getSingleProduct = async (req, res) => {
-  const { id } = req.params;
-const show = await Product.findOne({ id:id });
+  try {
+    const { id } = req.params;
+    const product = await Product.findOne({ id: id });
 
-  if (!show) {
-    throw new Error(`product with id ${id} does not exist`);
+    if (!product) {
+      return res.status(404).json({ message: `Product with id ${id} does not exist` });
+    }
+
+    res.status(200).json(product);
+  } catch (error) {
+    console.error("Error in getSingleProduct:", error);
+    res.status(500).json({ message: "Failed to fetch product" });
   }
-
-  res.status(200).json(show);
 };
