@@ -10,16 +10,17 @@ import profileRoutes from "./routes/rou-profile.js"
 import adressRoutes from "./routes/rou-adress.js"
 import webhookRoutes from "./routes/rou-webhook.js"
 import orderRoutes from "./routes/rou-order.js"
-
+import cookieParser from 'cookie-parser';
 
 import cors from "cors";
 const app = express();
 
-
+app.use(cookieParser()); 
 
 app.use(
   cors({
     origin: ["http://localhost:5173","https://vite-frontend-ten.vercel.app",'https://www.estrellaco.com'],
+    credentials: true 
   })
 );
 app.use( webhookRoutes);

@@ -12,7 +12,7 @@ export const addressValidator = (req, res, next) => {
     isDefault,
   } = req.body;
 
-  const errors = [];
+  const fieldErrors = {};
 
   // --- Text field sanitization helper ---
   const sanitize = (val) => val.toString().trim().replace(/<[^>]*>?/gm, "");
@@ -23,38 +23,38 @@ export const addressValidator = (req, res, next) => {
 
   // --- Full Name ---
   if (!fullName) {
-    errors.push("fullName is required");
+    fieldErrors.fullName = "fullName is required";
   } else {
     fullName = sanitize(fullName);
-    if (fullName.length < 3) errors.push("fullName must be at least 3 characters");
+    if (fullName.length < 3) fieldErrors.fullName = "fullName must be at least 3 characters";
     req.body.fullName = fullName;
   }
 
   // --- Mobile ---
   if (!mobile) {
-    errors.push("mobile is required");
+    fieldErrors.mobile = "mobile is required";
   } else {
     mobile = mobile.toString().trim();
     if (!/^[6-9]\d{9}$/.test(mobile)) {
-      errors.push("mobile must be a valid 10-digit Indian number starting with 6-9");
+      fieldErrors.mobile = "mobile must be a valid 10-digit Indian number starting with 6-9";
     }
     req.body.mobile = mobile;
   }
 
   // --- Pincode ---
   if (!pincode) {
-    errors.push("pincode is required");
+    fieldErrors.pincode = "pincode is required";
   } else {
     pincode = pincode.toString().trim();
     if (!/^\d{6}$/.test(pincode)) {
-      errors.push("pincode must be a 6-digit number");
+      fieldErrors.pincode = "pincode must be a 6-digit number";
     }
     req.body.pincode = pincode;
   }
 
   // --- City ---
   if (!city) {
-    errors.push("city is required");
+    fieldErrors.city = "city is required";
   } else {
     city = sanitize(city);
     req.body.city = city;
@@ -62,7 +62,7 @@ export const addressValidator = (req, res, next) => {
 
   // --- State ---
   if (!state) {
-    errors.push("state is required");
+    fieldErrors.state = "state is required";
   } else {
     state = sanitize(state);
     req.body.state = state;
@@ -70,7 +70,7 @@ export const addressValidator = (req, res, next) => {
 
   // --- Block ---
   if (!block) {
-    errors.push("block is required");
+    fieldErrors.block = "block is required";
   } else {
     block = sanitize(block);
     req.body.block = block;
@@ -78,7 +78,7 @@ export const addressValidator = (req, res, next) => {
 
   // --- Locality ---
   if (!locality) {
-    errors.push("locality is required");
+    fieldErrors.locality = "locality is required";
   } else {
     locality = sanitize(locality);
     req.body.locality = locality;
@@ -95,7 +95,7 @@ export const addressValidator = (req, res, next) => {
   if (addressType) {
     addressType = capitalize(addressType);
     if (!allowedTypes.includes(addressType)) {
-      errors.push("addressType must be Home, Work, or Other");
+      fieldErrors.addressType = "addressType must be Home, Work, or Other";
     } else {
       req.body.addressType = addressType;
     }
@@ -108,7 +108,7 @@ export const addressValidator = (req, res, next) => {
     if (typeof isDefault === "string") {
       isDefault = isDefault.toLowerCase() === "true";
     } else if (typeof isDefault !== "boolean") {
-      errors.push("isDefault must be true or false");
+      fieldErrors.isDefault = "isDefault must be true or false";
     }
     req.body.isDefault = isDefault;
   } else {
@@ -116,12 +116,18 @@ export const addressValidator = (req, res, next) => {
   }
 
   // --- Final check ---
-  if (errors.length > 0) {
-    return res.status(400).json({ success: false, message: errors.join(", ") });
+  if (Object.keys(fieldErrors).length > 0) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "Validation failed",
+      fieldErrors: fieldErrors // This matches what your frontend expects
+    });
   }
 
   next();
 };
+
+
 export const editAddressValidator = (req, res, next) => {
   let { addressId } = req.params;
   const errors = [];

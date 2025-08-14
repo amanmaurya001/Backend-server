@@ -5,17 +5,19 @@ export const createNewsletter = async (req, res) => {
     const { requestedEmail } = req.body;
     const normalizedEmail = requestedEmail.toLowerCase().trim();
 
-    const emailCheck = await Newsletter.findOne({
-      Newsletter_emails: normalizedEmail,
-    });
+    // Check if email already exists
+    const emailCheck = await Newsletter.findOne({ Newsletter_emails: normalizedEmail });
 
     if (emailCheck) {
-      return res.status(409).json({ message: "Email already exist " });
-    } 
-      await Newsletter.create({  Newsletter_emails: normalizedEmail });
-      res.status(201).json({ message: "You subscribed successfully" });
-  
+      return res.status(409).json({ message: "Email already exists" });
+    }
+
+    // Create new newsletter subscription
+    await Newsletter.create({ Newsletter_emails: normalizedEmail });
+    return res.status(201).json({ message: "You subscribed successfully" });
+
   } catch (error) {
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("Newsletter subscription error:", error.message);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };

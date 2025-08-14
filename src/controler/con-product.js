@@ -18,28 +18,7 @@ export const getProductsByGender = async (req, res) => {
   }
 };
 
-// ✅ Get random products by gender
-export const getRandomProductsByGender = async (req, res) => {
-  try {
-    const { Gender } = req.params;
 
-    const randomProducts = await Product.aggregate([
-      {
-        $match: {
-          gender: { $regex: `^${Gender}$`, $options: "i" },
-        },
-      },
-      {
-        $sample: { size: 8 },
-      },
-    ]);
-
-    res.status(200).json(randomProducts);
-  } catch (error) {
-    console.error("Error in getRandomProductsByGender:", error);
-    res.status(500).json({ message: "Something went wrong while fetching products" });
-  }
-};
 
 // ✅ Get products by gender & category
 export const getProductsByGenderCategory = async (req, res) => {
@@ -76,5 +55,30 @@ export const getSingleProduct = async (req, res) => {
   } catch (error) {
     console.error("Error in getSingleProduct:", error);
     res.status(500).json({ message: "Failed to fetch product" });
+  }
+};
+
+
+
+// ✅ Get random products by gender
+export const getRandomProductsByGender = async (req, res) => {
+  try {
+    const { Gender } = req.params;
+
+    const randomProducts = await Product.aggregate([
+      {
+        $match: {
+          gender: { $regex: `^${Gender}$`, $options: "i" },
+        },
+      },
+      {
+        $sample: { size: 8 },
+      },
+    ]);
+
+    res.status(200).json(randomProducts);
+  } catch (error) {
+    console.error("Error in getRandomProductsByGender:", error);
+    res.status(500).json({ message: "Something went wrong while fetching products" });
   }
 };

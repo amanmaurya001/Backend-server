@@ -2,52 +2,83 @@ import Cart from "../models/mod-cart.js";
 import Product from "../models/product.js";
 import Order from "../models/mod-orders.js";
 import User from "../models/user.js"
-import jwt from "jsonwebtoken";
 import Stripe from "stripe";
 import dotenv from "dotenv";
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); 
 
-const JWT_SECRET = process.env.JWT_SERCET_KEY;
 
+
+/**
+ * ======================================================
+ * CREATE CART / ADD TO CART
+ * ------------------------------------------------------
+ */
 export const createCart = async (req, res) => {
-  const { productId, quantity, size } = req.body;
+  try {
+    // Request body se data lena
+    const { productId, quantity, size } = req.body;
+    const cartId = req.user; // Logged-in user ka ID
 
-  const cartId = req.user;
+    // Check if cart exists
+    const cart = await Cart.findOne({ cartId });
 
-  const cart = await Cart.findOne({ cartId });
+    if (cart) {
+      // Check if same product + size already exists
+      const existingItem = cart.items.find(
+        (item) => item.productId.toString() === productId && item.size === size
+      );
 
-  if (cart) {
-    // Check if product with same size already exists in cart
-    const existingItem = cart.items.find(
-      (item) => item.productId.toString() === productId && item.size === size
-    );
+      if (existingItem) {
+        // Update quantity agar same product+size mil gaya
+        existingItem.quantity += quantity || 1;
+      } else {
+        // Naya product cart me add karo
+        cart.items.push({ productId, quantity: quantity || 1, size });
+      }
 
-    if (existingItem) {
-      // Update quantity if product with same size exists
-      existingItem.quantity += quantity || 1;
+      // Cart save karo
+      await cart.save();
     } else {
-      // Add new item to cart
-      cart.items.push({ productId, quantity: quantity || 1, size });
+      // Naya cart create karo agar user ka cart hi nahi hai
+      await Cart.create({
+        cartId,
+        items: [{ productId, quantity: quantity || 1, size }],
+      });
     }
 
-    await cart.save();
-  } else {
-    // Create new cart
-    await Cart.create({
-      cartId,
-      items: [{ productId, quantity: quantity || 1, size }],
+    // Success response
+    res.status(201).json({ message: "item added to cart successfully" });
+
+  } catch (error) {
+    // Error handling
+    console.error("Error in createCart:", error);
+    res.status(500).json({
+      message: "Server error while adding item to cart.",
+      error: error.message,
     });
   }
-
-  res.status(201).json({ message: "item added to cart successfully" });
 };
 
+/**
+ * ======================================================
+ * SHOW CART
+ * ------------------------------------------------------
+ * User ke cart ka detail return karta hai:
+ * - Products list (quantity, size, price, image)
+ * - Order summary (subtotal, discount, delivery charges, total)
+ * Agar cart empty ho to empty array + zero summary deta hai.
+ * ======================================================
+ */
 export const showCart = async (req, res) => {
   try {
     let subtotal = 0;
-    const cartId = req.user;
+    const cartId = req.user; // Logged-in user ka ID
+
+    // User ka cart find karo
     const cartUserObj = await Cart.findOne({ cartId });
+
+    // Agar cart empty hai ya exist nahi karta
     if (!cartUserObj || cartUserObj.items.length === 0) {
       return res.status(200).json({
         items: [],
@@ -60,14 +91,22 @@ export const showCart = async (req, res) => {
       });
     }
 
+    // Cart me jitne product IDs hai wo collect karo
     const productIds = cartUserObj.items.map((item) => item.productId);
+
+    // Un products ka data fetch karo
     const products = await Product.find({ _id: { $in: productIds } });
+
+    // Final cart array banate hue subtotal calculate karo
     const finalCart = cartUserObj.items.map((cartItem) => {
       const product = products.find(
         (p) => p._id.toString() === cartItem.productId.toString()
       );
+
+      // Price * Quantity
       const itemTotal = (product?.price?.original || 0) * cartItem.quantity;
       subtotal += itemTotal;
+
       return {
         itemId: cartItem._id,
         productId: cartItem.productId,
@@ -79,10 +118,13 @@ export const showCart = async (req, res) => {
         productLink: product?.productLink,
       };
     });
-    const discount = subtotal * 0.1;
-    const deliveryCharge = subtotal >= 2500 ? 0 : 100;
+
+    // Summary calculation
+    const discount = subtotal * 0.1; // 10% discount
+    const deliveryCharge = subtotal >= 2500 ? 0 : 100; // Free delivery above ₹2500
     const total = subtotal - discount + deliveryCharge;
 
+    // Response send karo
     res.status(200).json({
       items: finalCart,
       summary: {
@@ -92,36 +134,49 @@ export const showCart = async (req, res) => {
         total: Math.round(total),
       },
     });
+
   } catch (err) {
+    console.error("Error in showCart:", err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
+
+/**
+ * ======================================================
+ * DELETE CART ITEM
+ * ------------------------------------------------------
+ * User ke cart se ek specific product remove karta hai.
+ * Agar product na mile to 404 return karega.
+ * ======================================================
+ */
 export const deleteCartItem = async (req, res) => {
   try {
-    const cartId = req.user;
+    const cartId = req.user; // Logged-in user ka ID
+    const { itemId } = req.params; // Cart item ka ID (MongoDB _id)
 
-    // 3. Get itemId from params
-    const { itemId } = req.params;
-
-    // 4. Pull the item from cart's items array
+    // Cart se matching _id wala item remove karo
     const result = await Cart.updateOne(
       { cartId },
       { $pull: { items: { _id: itemId } } }
     );
 
+    // Agar koi item remove nahi hua
     if (result.modifiedCount === 0) {
       return res
         .status(404)
         .json({ message: "Item not found or already removed" });
     }
 
+    // Success
     res.status(200).json({ message: "Item removed successfully" });
+
   } catch (error) {
     console.error("Error deleting cart item:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 
