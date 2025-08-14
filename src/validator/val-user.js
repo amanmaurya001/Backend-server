@@ -6,7 +6,7 @@ export const registerValidator = (req, res, next) => {
   if (!username) {
     errors.push("username is required");
   } else {
-    username = username.toString().trim().replace(/<[^>]*>?/gm, "");
+     username = username.toString().trim().replace(/<[^>]*>?/gm, "").toLowerCase();
     const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
     if (!usernameRegex.test(username)) {
       errors.push("username must be 3-20 characters, letters/numbers/underscores only");

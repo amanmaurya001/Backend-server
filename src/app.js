@@ -16,10 +16,12 @@ import cors from "cors";
 const app = express();
 
 app.use(cookieParser()); 
-
+const COROS_1=process.env.COROS_1;
+const COROS_2=process.env.COROS_2;
+const COROS_3=process.env.COROS_3;
 app.use(
   cors({
-    origin: ["http://localhost:5173","https://vite-frontend-ten.vercel.app",'https://www.estrellaco.com'],
+    origin: [COROS_1, COROS_2, COROS_3],
     credentials: true 
   })
 );
