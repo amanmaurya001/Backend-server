@@ -189,11 +189,10 @@ export const checkAuth = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    // Cookie clear karo
     res.clearCookie("authToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: true,       // Production HTTPS
+      sameSite: "none",   // Cross-site allowed
     });
 
     return res.status(200).json({
@@ -208,6 +207,7 @@ export const logout = async (req, res) => {
     });
   }
 };
+
 
 // =========================
 // Change Password
