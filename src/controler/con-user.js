@@ -14,13 +14,20 @@ export const getRegister = async (req, res) => {
 
     // Basic validation
     if (!username || !email || !password || !gender) {
-      return res.status(400).json({ success: false, message: "All required fields must be provided" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "All required fields must be provided",
+        });
     }
 
     // Check if username exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: "Username already exists" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Username already exists" });
     }
 
     // Hash password
@@ -36,18 +43,19 @@ export const getRegister = async (req, res) => {
       phone: phone || undefined,
     });
 
-    return res.status(201).json({ success: true, message: "User registered successfully" });
-
+    return res
+      .status(201)
+      .json({ success: true, message: "User registered successfully" });
   } catch (err) {
     console.error("Register Error:", err.message);
-    return res.status(500).json({ success: false, message: "Server error. Please try again later." });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Server error. Please try again later.",
+      });
   }
 };
-
-
-
-
-
 
 // =========================
 // Login Controller
@@ -57,19 +65,28 @@ export const getLogin = async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res.status(400).json({ success: false, message: "Username and password are required" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Username and password are required",
+        });
     }
 
     // Find user
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid username or password" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid username or password" });
     }
 
     // Compare passwords
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ success: false, message: "Invalid username or password" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid username or password" });
     }
 
     // Generate JWT
@@ -84,18 +101,24 @@ export const getLogin = async (req, res) => {
     );
 
     // return res.status(200).json({ success: true, token });
-    res.cookie('authToken', token, {
+    res.cookie("authToken", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none',
+      secure: true,
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
-    
-    return res.status(200).json({ success: true, user: { username: user.username } });
 
+    return res
+      .status(200)
+      .json({ success: true, user: { username: user.username } });
   } catch (err) {
     console.error("Login Error:", err.message);
-    return res.status(500).json({ success: false, message: "Server error. Please try again later." });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Server error. Please try again later.",
+      });
   }
 };
 
@@ -107,60 +130,58 @@ export const checkAuth = async (req, res) => {
   try {
     // Cookie se token get karo
     const token = req.cookies.authToken;
-    
+
     if (!token) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "No token provided" 
+      return res.status(401).json({
+        success: false,
+        message: "No token provided",
       });
     }
-    
+
     // Token verify karo
     const decoded = jwt.verify(token, JWT_SECRET);
-    
+
     // User find karo (password exclude karo)
-    const user = await User.findById(decoded.userId).select('-password');
-    
+    const user = await User.findById(decoded.userId).select("-password");
+
     if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "User not found" 
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
       });
     }
-    
-    return res.status(200).json({ 
-      success: true, 
+
+    return res.status(200).json({
+      success: true,
       user: {
         id: user._id,
         username: user.username,
-        role: user.role
-      }
+        role: user.role,
+      },
     });
-    
   } catch (err) {
     // Token invalid/expired
-    if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Token expired" 
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        message: "Token expired",
       });
     }
-    
-    if (err.name === 'JsonWebTokenError') {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Invalid token" 
+
+    if (err.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token",
       });
     }
-    
+
     console.error("Auth Check Error:", err.message);
-    return res.status(500).json({ 
-      success: false, 
-      message: "Server error" 
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
     });
   }
 };
-
 
 // =========================
 // Logout Controller (Bonus)
@@ -169,28 +190,27 @@ export const checkAuth = async (req, res) => {
 export const logout = async (req, res) => {
   try {
     // Cookie clear karo
-    res.clearCookie('authToken', {
+    res.clearCookie("authToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
     });
-    
-    return res.status(200).json({ 
-      success: true, 
-      message: "Logged out successfully" 
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
     });
-    
   } catch (err) {
     console.error("Logout Error:", err.message);
-    return res.status(500).json({ 
-      success: false, 
-      message: "Server error" 
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
     });
   }
 };
 
 // =========================
-// Change Password 
+// Change Password
 // =========================
 
 export const changePassword = async (req, res) => {
@@ -218,7 +238,10 @@ export const changePassword = async (req, res) => {
     }
 
     // Step 3: Verify current password
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
@@ -246,7 +269,6 @@ export const changePassword = async (req, res) => {
       success: true,
       message: "Password updated successfully",
     });
-
   } catch (err) {
     // Server error handling
     console.error("Change password error:", err);
@@ -256,5 +278,3 @@ export const changePassword = async (req, res) => {
     });
   }
 };
-
-
