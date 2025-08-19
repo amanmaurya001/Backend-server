@@ -10,7 +10,7 @@ export const isLoggedIn = (req, res, next) => {
     const token = req.cookies.authToken;
 
     if (!token) {
-      return res.status(401).json({ message: "No token provided" });
+      return res.status(401).json({ message: "Please login to continue" });
     }
 
     const decodedUserId = jwt.verify(token, JWT_SECRET);

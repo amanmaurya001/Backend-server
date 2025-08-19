@@ -109,13 +109,13 @@ export const showCart = async (req, res) => {
 
       return {
         itemId: cartItem._id,
-        productId: cartItem.productId,
+        productId: product?.id,
         size: cartItem.size,
         quantity: cartItem.quantity,
         name: product?.name,
         price: product?.price,
         image: product?.images?.[0],
-        productLink: product?.productLink,
+       
       };
     });
 
