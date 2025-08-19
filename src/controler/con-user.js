@@ -14,12 +14,10 @@ export const getRegister = async (req, res) => {
 
     // Basic validation
     if (!username || !email || !password || !gender) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "All required fields must be provided",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "All required fields must be provided",
+      });
     }
 
     // Check if username exists
@@ -48,12 +46,10 @@ export const getRegister = async (req, res) => {
       .json({ success: true, message: "User registered successfully" });
   } catch (err) {
     console.error("Register Error:", err.message);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Server error. Please try again later.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
   }
 };
 
@@ -65,12 +61,10 @@ export const getLogin = async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Username and password are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Username and password are required",
+      });
     }
 
     // Find user
@@ -101,11 +95,20 @@ export const getLogin = async (req, res) => {
     );
 
     // return res.status(200).json({ success: true, token });
+    // res.cookie("authToken", token, {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: "none",
+    //   maxAge: 24 * 60 * 60 * 1000, // 1 day
+    // });
+
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000,
+      path: "/",
+      domain: undefined, // Explicit domain set mat karo cross-origin me
     });
 
     return res
@@ -113,12 +116,10 @@ export const getLogin = async (req, res) => {
       .json({ success: true, user: { username: user.username } });
   } catch (err) {
     console.error("Login Error:", err.message);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Server error. Please try again later.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
   }
 };
 
@@ -191,8 +192,8 @@ export const logout = async (req, res) => {
   try {
     res.clearCookie("authToken", {
       httpOnly: true,
-      secure: true,       // Production HTTPS
-      sameSite: "none",   // Cross-site allowed
+      secure: true, // Production HTTPS
+      sameSite: "none", // Cross-site allowed
     });
 
     return res.status(200).json({
@@ -207,7 +208,6 @@ export const logout = async (req, res) => {
     });
   }
 };
-
 
 // =========================
 // Change Password
