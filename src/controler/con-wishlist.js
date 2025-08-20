@@ -96,7 +96,7 @@ export const showWishList = async (req, res) => {
 
       return {
         wishlistItemId: item._id, // Wishlist item ka unique _id (wishlist ke andar ka item)
-        productId: item.productId, // Product ka ID
+        productId: product?.id, // Product ka ID
         size: item.size,           // User-selected size (agar available)
         color: item.color,         // User-selected color (agar available)
         name: product?.name,       // Product ka naam
