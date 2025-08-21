@@ -101,14 +101,13 @@ export const getLogin = async (req, res) => {
     //   sameSite: "none",
     //   maxAge: 24 * 60 * 60 * 1000, // 1 day
     // });
-
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: true,
       sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
       path: "/",
-      domain: undefined, // Explicit domain set mat karo cross-origin me
+      domain: ".estrellaco.com", // ✅ Ye use karo
     });
 
     return res
