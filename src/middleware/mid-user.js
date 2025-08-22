@@ -16,6 +16,7 @@ export const isLoggedIn = (req, res, next) => {
     const decodedUserId = jwt.verify(token, JWT_SECRET);
 
     req.user = decodedUserId.userId;
+    req.session = decodedUserId.sessionId;
 
     next();
   } catch (err) {

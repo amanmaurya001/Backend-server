@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
+import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SERCET_KEY;
@@ -83,31 +84,50 @@ export const getLogin = async (req, res) => {
         .json({ success: false, message: "Invalid username or password" });
     }
 
+    // Session data create kar
+    const sessionId = uuidv4();
+    const deviceInfo = req.headers["user-agent"] || "Unknown Device";
+    const ipAddress = req.ip || req.connection.remoteAddress || "Unknown IP";
+
     // Generate JWT
     const token = jwt.sign(
       {
         userId: user._id,
         username: user.username,
         role: user.role,
+        sessionId: sessionId,
       },
       JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // return res.status(200).json({ success: true, token });
-    // res.cookie("authToken", token, {
-    //   httpOnly: true,
-    //   secure: true,
-    //   sameSite: "none",
-    //   maxAge: 24 * 60 * 60 * 1000, // 1 day
-    // });
+    // Session data object
+    const sessionData = {
+      sessionId,
+      deviceInfo,
+      ipAddress,
+      loginTime: new Date(),
+      lastActivity: new Date(),
+    };
+
+    // Dono arrays mein add kar
+    user.activeSessions.push(sessionData);
+    user.loginHistory.push({
+      sessionId,
+      deviceInfo,
+      ipAddress,
+      loginTime: new Date(),
+      status: "active", // loginHistory ke liye status add kar
+    });
+
+    await user.save();
+
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: true,
       sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
       path: "/",
-     
     });
 
     return res
@@ -150,6 +170,22 @@ export const checkAuth = async (req, res) => {
         message: "User not found",
       });
     }
+
+    // Session validate kar
+    const sessionExists = user.activeSessions.find(
+      (s) => s.sessionId === decoded.sessionId
+    );
+    if (!sessionExists) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Session expired" });
+    }
+
+    // Last activity update kar (sirf activeSessions mein)
+    await User.findOneAndUpdate(
+      { _id: decoded.userId, "activeSessions.sessionId": decoded.sessionId },
+      { $set: { "activeSessions.$.lastActivity": new Date() } }
+    );
 
     return res.status(200).json({
       success: true,
