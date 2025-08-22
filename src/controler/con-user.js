@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SERCET_KEY;
@@ -87,7 +87,10 @@ export const getLogin = async (req, res) => {
     // Session data create kar
     const sessionId = uuidv4();
     const deviceInfo = req.headers["user-agent"] || "Unknown Device";
-    const ipAddress = req.ip || req.connection.remoteAddress || "Unknown IP";
+    const ipAddress =
+      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || // first IP from proxy
+      req.socket?.remoteAddress ||
+      "Unknown IP";
 
     // Generate JWT
     const token = jwt.sign(
