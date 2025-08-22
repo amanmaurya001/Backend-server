@@ -107,7 +107,7 @@ export const getLogin = async (req, res) => {
       sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
       path: "/",
-      domain: ".estrellaco.com", // ✅ Ye use karo
+     
     });
 
     return res
